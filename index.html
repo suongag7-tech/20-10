@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ChouChou — 🌙💐</title>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<style>
+  :root{
+    --mint:#bff6ea;
+    --pink:#ff9bd2;
+    --bg-deep:#081228;
+    --bg-mid:#12233a;
+    --text:#fff8f0;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-deep),#071428 70%);font-family:"Poppins",sans-serif;overflow:hidden;color:var(--text)}
+  #container{position:relative;width:100vw;height:100vh;display:block;overflow:hidden}
+  canvas{position:absolute;left:0;top:0;display:block}
+
+  /* UI overlay */
+  .ui {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    z-index: 120;
+    display:flex;
+    gap:10px;
+  }
+  .btn {
+    background: rgba(255,255,255,0.06);
+    color:var(--text);
+    border-radius:12px;
+    padding:8px 12px;
+    backdrop-filter: blur(6px);
+    border:1px solid rgba(255,255,255,0.06);
+    cursor:pointer;
+    font-weight:600;
+  }
+  .centerText {
+    position: absolute;
+    left: 50%;  
+    top: 200px;
+    transform: translateX(-50%);    
+    text-align: center;  /* hoặc center nếu muốn giữa dòng */
+    z-index: 40;
+    pointer-events: none;
+  }
+  .title {
+    font-size: clamp(20px, 3.4vw, 36px); 
+    letter-spacing:4px;
+    color:var(--text);
+    text-shadow:0 6px 30px rgba(0,0,0,0.6), 0 0 18px rgba(180,200,255,0.06);
+    opacity:0;
+  }
+  .subtitle {
+    margin-top:8px;
+    font-size: clamp(14px, 2.2vw, 20px);
+    color: #f0eeee;
+    opacity:0;
+  }
+
+  /* scene containers */
+  .scene {
+    position:absolute;inset:0;z-index:20;pointer-events:none;
+  }
+
+  .pastel {
+    position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(191,246,234,0.06), rgba(255,154,210,0.02));
+    z-index:30;opacity:0;pointer-events:none;
+  }
+
+  /* bouquet wrapper (now will contain hoa.png) */
+  .bouquet {
+    position:absolute;
+    left:50%;
+    top:55%;
+    transform:translate(-50%,0) scale(0.7);
+    z-index:100;
+    opacity:0;
+    filter:drop-shadow(0 10px 30px rgba(0,0,0,0.35));
+    pointer-events:none;
+    will-change: transform, opacity;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .bouquet img{
+    width:320px;
+    max-width:80vw;
+    height:auto;
+    display:block;
+    border-radius:12px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.45);
+  }
+
+  .finalText {
+    position:absolute;
+    top:18%;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:110;
+    text-align:center;
+    opacity:0;
+    pointer-events:none;
+  }
+  .finalText h1{
+    margin:0;font-size:clamp(18px,3.2vw,36px);color:#fffefb;letter-spacing:2px;
+    text-shadow:0 6px 30px rgba(0,0,0,0.45), 0 0 18px rgba(255,155,210,0.12)
+  }
+  .finalText p{
+    margin:8px 0 0;font-size:clamp(12px,2vw,16px);color:#fff5f7;opacity:0.95;white-space:pre-line;
+  }
+
+  .spark {
+    position:absolute;width:6px;height:6px;border-radius:50%;background:var(--pink);
+    box-shadow:0 0 8px rgba(255,155,210,0.9);
+    z-index:105;pointer-events:none;opacity:0;
+  }
+
+  .bouquetBackdrop {
+    position:absolute;
+    left:50%;
+    top:72%;
+    transform:translate(-50%,-50%);
+    width:520px;
+    height:420px;
+    border-radius:50%;
+    background: radial-gradient(circle at 50% 40%, rgba(255,240,250,0.22), rgba(191,246,234,0.08) 45%, rgba(255,154,210,0.02) 70%);
+    z-index:95;
+    filter: blur(18px) saturate(1.08);
+    opacity:0;
+    pointer-events:none;
+  }
+
+  /* gift box */
+  .gift {
+    position:absolute;
+    left:50%;
+    top:66%;
+    transform:translate(-50%,-50%);
+    z-index:115;
+    width:160px;
+    height:140px;
+    border-radius:14px;
+    background:linear-gradient(180deg,#ffd7ee,#ffc3e6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 18px 40px rgba(0,0,0,0.45);
+    cursor:pointer;
+    user-select:none;
+    transition:transform .25s ease, opacity .35s ease;
+  }
+  .gift .bow{
+    position:absolute;
+    top:8px;
+    left:50%;
+    transform:translateX(-50%);
+    width:84px;height:32px;border-radius:8px;background:linear-gradient(180deg,#ff7fb0,#ff5f98);
+    box-shadow:0 6px 18px rgba(255,120,170,0.18);
+  }
+  .gift .tag{
+    position:absolute;
+    top:18%;
+    /* right:10px; */
+    left: 50%;
+    /* transform: translateX(-50%); */
+    transform: translate(-50%, -50%);
+    font-weight:700;
+    color:#fff;
+    font-size:12px;
+    opacity:0.95;
+  }
+
+  /* preview button style (visible on center area) */
+  #previewBtn {
+    position:absolute;
+    left:50%;
+    top:64%;
+    transform:translateX(-50%);
+    z-index:50;
+    background: linear-gradient(180deg,#ffd6ee,#ffbfe0);
+    color:#2a2230;
+    border-radius:18px;
+    padding:10px 18px;
+    border: none;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+
+  @media (max-width:520px){
+    .subtitle{font-size:14px}
+    .bouquetBackdrop{width:380px;height:320px}
+    .bouquet img{width:240px;height:auto}
+    .gift{width:140px;height:120px}
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <!-- canvases -->
+  <canvas id="starsCanvas"></canvas>    <!-- background stars -->
+  <canvas id="constellationCanvas"></canvas> <!-- constellation / connecting lines -->
+  <canvas id="fireworkCanvas"></canvas> <!-- fireworks -->
+
+  <!-- UI (play/pause for audio) -->
+  <div class="ui">
+    <button id="playBtn" class="btn">▶ Phát nhạc</button>
+    <button id="replayBtn" class="btn">🔁 Tải lại</button>
+  </div>
+
+  <!-- center text early scenes -->
+  <div class="centerText">
+    <div class="title" id="title20">Happy Women's Day</div>
+    <div class="subtitle" id="subtitle">Báo cáo: Thuốc bổ hôm nay của chị bé gồm cười thật nhiều, nghỉ ngơi nhiều hơn và ngủ thật ngon  💖</div>
+  </div>
+
+  <!-- preview button before fireworks -->
+  <button id="previewBtn">Xem trước pháo hoa</button>
+
+  <div class="scene pastel" id="pastelOverlay"></div>
+
+  <!-- final message -->
+  <div class="finalText" id="finalText">
+    <h1 id="finalHeading">Tặng ChouChou 💐</h1>
+    <p id="finalSub">Chúc chị bé một ngày 20/10 thật bình yên và nhiều niềm vui nhỏ, bé xin được góp 1 phần niềm vui nhỏ. Tâm an thì cảnh an. Muộn phiền đến rồi sẽ đi như mây bay ngang núi </p>
+  </div>
+
+  <!-- bouquet backdrop (soft cinematic pastel glow) -->
+  <div class="bouquetBackdrop" id="bouquetBackdrop"></div>
+
+  <!-- bouquet now uses hoa.png -->
+  <div class="bouquet" id="bouquetImg" aria-hidden="true">
+    <!-- hoa.png should be in same folder -->
+    <img id="hoaImg" src="hoa.png" alt="Bó hoa" />
+  </div>
+
+  <!-- gift box -->
+  <div id="giftBox" class="gift" style="opacity:0;transform:translate(-50%,-50%) scale(0.8);pointer-events:none;">
+    <div class="bow"></div>
+    <div class="tag">Mở quà</div>
+  </div>
+
+  <!-- tiny sparkles, will be positioned with JS -->
+  <div id="sparklesContainer"></div>
+
+</div>
+
+<!-- audio: user said they have love.mp3 — place it with index.html -->
+<audio id="bgAudio" src="love.mp3" loop></audio>
+
+<script>
+/* =========================
+   Setup canvases + sizes
+   ========================= */
+const starsCanvas = document.getElementById('starsCanvas');
+const starCtx = starsCanvas.getContext('2d');
+
+const consCanvas = document.getElementById('constellationCanvas');
+const consCtx = consCanvas.getContext('2d');
+
+const fireCanvas = document.getElementById('fireworkCanvas');
+const fireCtx = fireCanvas.getContext('2d');
+
+const canvases = [starsCanvas, consCanvas, fireCanvas];
+
+let W = innerWidth, H = innerHeight;
+function resizeAll(){
+  W = innerWidth; H = innerHeight;
+  for (let c of canvases) {
+    c.width = W * devicePixelRatio;
+    c.height = H * devicePixelRatio;
+    c.style.width = W + 'px';
+    c.style.height = H + 'px';
+  }
+  starCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  consCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  fireCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+resizeAll();
+addEventListener('resize', resizeAll);
+
+/* =========================
+   Stars background
+   ========================= */
+let stars = [];
+function initStars(){
+  stars = [];
+  const count = Math.round((W*H)/4000); // responsive
+  for (let i=0;i<count;i++){
+    stars.push({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: Math.random()*1.7 + 0.3,
+      a: Math.random()*0.9 + 0.1,
+      vy: Math.random()*0.15 + 0.02
+    });
+  }
+}
+initStars();
+
+function drawStars(){
+  starCtx.clearRect(0,0,W,H);
+  const g = starCtx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(6,14,34,0.6)');
+  g.addColorStop(1,'rgba(3,6,12,0.9)');
+  starCtx.fillStyle = g;
+  starCtx.fillRect(0,0,W,H);
+
+  for (let s of stars){
+    s.y += s.vy;
+    if (s.y > H+10) s.y = -10;
+    starCtx.globalAlpha = s.a;
+    starCtx.beginPath();
+    starCtx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    starCtx.fillStyle = '#ffffff';
+    starCtx.fill();
+  }
+  starCtx.globalAlpha = 1;
+}
+
+/* =========================
+   Constellation (particles that form letters)
+   ========================= */
+const off = document.createElement('canvas');
+const offCtx = off.getContext('2d');
+
+function getTextPoints(text, fontSize=160){
+  off.width = W;
+  off.height = H;
+  offCtx.clearRect(0,0,off.width,off.height);
+  offCtx.fillStyle = 'white';
+  offCtx.font = `700 ${fontSize}px Poppins, sans-serif`;
+  offCtx.textAlign = 'center';
+  offCtx.textBaseline = 'middle';
+  offCtx.fillText(text, W/2, H/2 - 10);
+  const img = offCtx.getImageData(0,0,off.width,off.height).data;
+  const points = [];
+  const gap = Math.max(4, Math.round(fontSize/24));
+  for (let y=0; y<off.height; y+=gap){
+    for (let x=0; x<off.width; x+=gap){
+      const idx = (x + y*off.width)*4 + 3;
+      if (img[idx] > 120){
+        points.push({x,y});
+      }
+    }
+  }
+  return points;
+}
+
+let constParticles = [];
+function createConstParticles(count=0){
+  constParticles = [];
+  for (let i=0;i<count;i++){
+    constParticles.push({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      tx: Math.random()*W,
+      ty: Math.random()*H,
+      r: Math.random()*1.6 + 0.6,
+      vx: 0, vy:0
+    });
+  }
+}
+createConstParticles(600);
+
+/* =========================
+   Fireworks system
+   ========================= */
+let rockets = []; // ascending rockets
+let particles = []; // exploded particles
+
+function launchRocketStrong(){
+  rockets.push({
+    x: Math.random()*W*0.8 + W*0.1,
+    y: H + 10,
+    vx: (Math.random()-0.5)*2.2,
+    vy: - (Math.random()*8 + 10.5),
+    life: Math.random()*40 + 80,
+    color: `hsl(${Math.random()*80 + 280},80%,65%)`,
+    big: Math.random() > 0.5
+  });
+}
+function launchRocket(){
+  rockets.push({
+    x: Math.random()*W*0.7 + W*0.15,
+    y: H + 20,
+    vx: (Math.random()-0.5)*1.2,
+    vy: - (Math.random()*6 + 9),
+    life: Math.random()*40 + 60,
+    color: `hsl(${Math.random()*60 + 300},80%,70%)`,
+    big: false
+  });
+}
+
+function updateFireworks(){
+  fireCtx.clearRect(0,0,W,H);
+
+  // rockets
+  for (let i=rockets.length-1;i>=0;i--){
+    const r = rockets[i];
+    r.x += r.vx;
+    r.y += r.vy;
+    r.vy += 0.12;
+    r.life--;
+    // draw rocket
+    fireCtx.beginPath();
+    const radius = r.big ? 4.8 : 3.5;
+    fireCtx.arc(r.x, r.y, radius,0,Math.PI*2);
+    fireCtx.fillStyle = r.color;
+    fireCtx.fill();
+
+    if (r.life < 0 || r.vy > -2){
+      // explode with bigger variety for strong rockets
+      const pieces = r.big ? 120 : 60;
+      for (let k=0;k<pieces;k++){
+        const ang = Math.random()*Math.PI*2;
+        const speed = Math.random()*(r.big?6:4) + (r.big?2.8:1.8);
+        particles.push({
+          x: r.x, y: r.y,
+          vx: Math.cos(ang)*speed,
+          vy: Math.sin(ang)*speed,
+          life: Math.random()*(r.big?120:80) + (r.big?80:40),
+          color: r.color,
+          alpha: 1,
+          size: r.big ? (Math.random()*2.8 + 1.6) : (Math.random()*1.8 + 0.9)
+        });
+      }
+      rockets.splice(i,1);
+    }
+  }
+
+  // particles
+  for (let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.06;
+    p.vx *= 0.997;
+    p.vy *= 0.997;
+    p.life--;
+    p.alpha = Math.max(0, p.life / 140);
+
+    fireCtx.globalAlpha = Math.min(1, p.alpha);
+    fireCtx.beginPath();
+    fireCtx.arc(p.x, p.y, p.size || 2.4, 0, Math.PI*2);
+    fireCtx.fillStyle = p.color;
+    fireCtx.fill();
+    fireCtx.globalAlpha = 1;
+
+    if (p.life <= 0) particles.splice(i,1);
+  }
+}
+
+/* =========================
+   animate loop
+   ========================= */
+let t = 0;
+function loop(){
+  t++;
+  drawStars();
+
+  // constellation particle motion & rendering
+  consCtx.clearRect(0,0,W,H);
+  consCtx.strokeStyle = 'rgba(200,230,255,0.07)';
+  consCtx.lineWidth = 1;
+  for (let i=0;i<constParticles.length;i++){
+    const p = constParticles[i];
+    p.x += (p.tx - p.x) * 0.06 + (Math.random()-0.5)*0.6;
+    p.y += (p.ty - p.y) * 0.06 + (Math.random()-0.5)*0.6;
+  }
+  for (let i=0;i<constParticles.length;i++){
+    for (let j=i+1;j<i+6 && j<constParticles.length;j++){
+      const a = constParticles[i], b = constParticles[j];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 36){
+        consCtx.globalAlpha = 0.14 * (1 - dist/36);
+        consCtx.beginPath();
+        consCtx.moveTo(a.x,a.y);
+        consCtx.lineTo(b.x,b.y);
+        consCtx.stroke();
+        consCtx.globalAlpha = 1;
+      }
+    }
+  }
+  for (let p of constParticles){
+    consCtx.beginPath();
+    consCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    consCtx.fillStyle = 'rgba(255,255,255,0.9)';
+    consCtx.fill();
+  }
+
+  updateFireworks();
+
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* =========================
+   UI + scene logic
+   ========================= */
+const titleEl = document.getElementById('title20');
+const subtitleEl = document.getElementById('subtitle');
+const pastel = document.getElementById('pastelOverlay');
+const bouquet = document.getElementById('bouquetImg');
+const finalText = document.getElementById('finalText');
+const sparklesContainer = document.getElementById('sparklesContainer');
+const playBtn = document.getElementById('playBtn');
+const replayBtn = document.getElementById('replayBtn');
+const bouquetBackdrop = document.getElementById('bouquetBackdrop');
+const previewBtn = document.getElementById('previewBtn');
+const giftBox = document.getElementById('giftBox');
+const hoaImg = document.getElementById('hoaImg');
+
+const audio = document.getElementById('bgAudio');
+
+playBtn.onclick = () => {
+  audio.play().catch(()=>{/* ignore autoplay blocked */});
+};
+replayBtn.onclick = () => {
+  location.reload();
+};
+
+/* make some sparkles elements (will be used around bouquet) */
+function makeSparkles(n=12){
+  sparklesContainer.innerHTML = '';
+  for (let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.style.left = (50 + (Math.random()*160 - 80)) + 'vw';
+    s.style.top = (70 + (Math.random()*20 - 20)) + 'vh';
+    s.style.opacity = 0;
+    s.style.transform = `translate(-50%,-50%) scale(${0.6+Math.random()*0.8})`;
+    document.getElementById('container').appendChild(s);
+  }
+}
+makeSparkles(14);
+
+/* intro animation (title/subtitle) */
+gsap.to(titleEl, {duration:1.2, opacity:1, y:-6, scale:1.02, ease:"back.out(1.2)", delay:0.6});
+gsap.to(subtitleEl, {duration:1, opacity:1, y:-8, delay:1.1});
+
+/* prepare constellation text points after intro */
+setTimeout(()=> {
+  const pts = getTextPoints('Chou Chou là vì sao đẹp nhất trên bầu trời 🌙', Math.round(Math.max(20, W/25)));
+  if (constParticles.length < pts.length) createConstParticles(pts.length);
+  for (let i=0;i<constParticles.length;i++){
+    const p = constParticles[i];
+    const target = pts[i % pts.length];
+    p.tx = target.x + (Math.random()*6-3);
+    p.ty = target.y + (Math.random()*6-3);
+    p.r = Math.random()*1.6 + 0.8;
+  }
+}, 1400);
+
+/* show preview button gently */
+gsap.fromTo(previewBtn, {scale:0.92, opacity:0}, {scale:1, opacity:1, duration:0.8, delay:1.6, ease:'back.out(1.2)'});
+
+/* ========== Main preview -> fireworks -> gift -> bouquet flow ========== */
+
+let fireworksInterval = null;
+let fireworksExtraInterval = null;
+let fireworksActive = false;
+
+function startFireworksShow(){
+  if (fireworksActive) return;
+  fireworksActive = true;
+  // small fade out of title/sub
+  gsap.to([titleEl, subtitleEl, previewBtn], {duration:0.6, opacity:0, y:-18, pointerEvents:'none'});
+
+  // Launch initial cluster immediately + aggressive launches
+  for (let i=0;i<8;i++){
+    setTimeout(launchRocketStrong, i * 140);
+  }
+  // sustained bursts for 5s
+  fireworksInterval = setInterval(()=> {
+    // launch a few rockets per tick
+    const n = Math.round(3 + Math.random()*5);
+    for (let i=0;i<n;i++){
+      if (Math.random() < 0.4) launchRocketStrong(); else launchRocket();
+    }
+  }, 180);
+
+  // occasional massive bursts
+  fireworksExtraInterval = setInterval(()=> {
+    for (let i=0;i<6;i++) setTimeout(launchRocketStrong, i*80);
+    // small container shake
+    gsap.fromTo('#container', {x:-4}, {x:4, duration:0.2, yoyo:true, repeat:3, ease:'sine.inOut'});
+  }, 1200);
+
+  // audio play attempt
+  audio.play().catch(()=>{/*ignore*/});
+
+  // stop after ~5s (5000ms)
+  setTimeout(()=> stopFireworksAndShowGift(), 5200);
+}
+
+function stopFireworksAndShowGift(){
+  if (!fireworksActive) return;
+  fireworksActive = false;
+  clearInterval(fireworksInterval);
+  clearInterval(fireworksExtraInterval);
+
+  // let remaining particles burn out for a short moment then transition
+  setTimeout(()=> {
+    // transition canvases -> pastel + show gift box
+    gsap.to('#fireworkCanvas', {duration:0.8, opacity:0});
+    gsap.to('#constellationCanvas', {duration:0.8, opacity:0});
+    gsap.to('#starsCanvas', {duration:0.8, opacity:0.25});
+    gsap.to(pastel, {duration:1.0, opacity:1});
+    // show backdrop gentle
+    gsap.to(bouquetBackdrop, {duration:1.0, opacity:1, ease:'power2.out', delay:0.6});
+    // show gift box (center-ish)
+    gsap.to(giftBox, {duration:0.9, opacity:1, scale:1, pointerEvents:'auto', ease:'back.out(1.4)', delay:1.0});
+  }, 350);
+}
+
+/* gift click -> reveal bouquet (hoa.png) and final text */
+giftBox.addEventListener('click', ()=> {
+  // animate box open: scale up then fade & vanish
+  gsap.to(giftBox, {duration:0.35, scale:1.1, y:-8, ease:'power2.out'});
+  gsap.to(giftBox, {duration:0.55, opacity:0, scale:0.7, delay:0.35, onComplete: ()=>{
+    giftBox.style.pointerEvents = 'none';
+    giftBox.style.display = 'none';
+    revealBouquet();
+  }});
+});
+
+function revealBouquet(){
+  // show bouquet image and final text including "Từ Thỏ Nhỏ"
+  // update final text (ensure newline preserved)
+  const finalSub = document.getElementById('finalSub');
+  finalSub.textContent = "Chúc chị bé một ngày 20/10 thật bình yên và nhiều niềm vui nhỏ, bé xin được góp một phần niềm vui nhỏ.\n\nTâm an thì cảnh an. Muộn phiền đến rồi sẽ đi như mây bay ngang núi";
+
+  // bouquet appear
+  gsap.to(bouquetBackdrop, {duration:0.8, opacity:1});
+  gsap.to(bouquet, {duration:1.1, opacity:1, y:"-90px", scale:1, ease:"back.out(1.2)"});
+  gsap.to(finalText, {duration:1.1, opacity:1, y:-18, ease:"power3.out", delay:0.25});
+  // sparkles around bouquet
+  const sparks = document.querySelectorAll('.spark');
+  sparks.forEach((s, idx)=>{
+    gsap.fromTo(s, {opacity:0, y:40, scale:0.6}, {opacity:1, y:0, duration:0.8, delay: idx*0.06 + 0.2, ease:'back.out(1.4)'});
+    gsap.to(s, {opacity:0, duration:1.6, delay: 1.4 + idx*0.04});
+  });
+  // little pulse on image
+  gsap.fromTo('#hoaImg', {scale:0.94}, {scale:1, duration:0.9, yoyo:true, repeat:2, ease:'sine.inOut', delay:0.6});
+}
+
+/* preview btn triggers fireworks show */
+previewBtn.addEventListener('click', ()=> {
+  startFireworksShow();
+  // hide preview button quickly
+  // 
+  previewBtn.style.display = 'none';
+});
+
+/* small polish: gentle twinkle & parallax on mouse */
+// let mx = 0, my = 0;
+// addEventListener('mousemove', (e)=>{
+//   mx = (e.clientX - W/2)*0.02;
+//   my = (e.clientY - H/2)*0.02;
+//   starCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,mx*0.3, my*0.3);
+//   consCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,mx*0.6, my*0.6);
+//   fireCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,mx*0.2, my*0.2);
+//   const b = document.getElementById('bouquetImg');
+//   const bb = document.getElementById('bouquetBackdrop');
+//   if (b) b.style.transform = `translate(-50%, 0) translate(${mx*2}px, ${my*2}px) scale(${1 + Math.abs(mx)*0.002})`;
+//   if (bb) bb.style.transform = `translate(-50%,-50%) translateX(${mx*2}px)`;
+// });
+
+
+/* hint animation for preview btn */
+(function showHint(){
+  previewBtn.animate([{opacity:1},{opacity:0.7},{opacity:1}], {duration:1600, iterations:Infinity});
+})();
+
+/* responsiveness: rebuild text points on resize */
+let lastW = W;
+addEventListener('resize', ()=>{
+  if (Math.abs(innerWidth - lastW) > 40){
+    initStars();
+    const pts = getTextPoints('ChouChou là vì sao đẹp nhất trên bầu trời 🌙', Math.round(Math.max(36, innerWidth/15)));
+    createConstParticles(Math.max(pts.length, 400));
+    for (let i=0;i<constParticles.length;i++){
+      constParticles[i].tx = Math.random()*W;
+      constParticles[i].ty = Math.random()*H;
+    }
+    lastW = innerWidth;
+  }
+});
+</script>
+</body>
+</html>
